@@ -1,0 +1,13 @@
+= jphil.process =
+
+Some utilities to handle external process
+
+[function] process->list CMD
+[function] process->string CMD
+
+Where CMD is the external command
+
+(process->list "uname -a") ➸  ("Linux platypus 3.13.0-37-generic #64-Ubuntu SMP Mon Sep 22 21:30:01 UTC 2014 i686 i686 i686 GNU/Linux")
+
+
+
