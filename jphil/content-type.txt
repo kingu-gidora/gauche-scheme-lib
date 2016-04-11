@@ -1,0 +1,14 @@
+= jphil.content-type =
+
+Get the content type of a file
+
+[parameter] content-type-db-file
+
+ Location of the content-types database.
+ Default is "/etc/mime.types".
+
+[function] content-type-of FILE
+
+ Return the content-type of the given file as a list of symbol
+ i.e.  (content-type-of "/etc/passwd") ➸ (text plain)
+
