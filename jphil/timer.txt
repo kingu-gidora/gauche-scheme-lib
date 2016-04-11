@@ -1,0 +1,13 @@
+= jphil.timer =
+
+Time the execution of some code
+
+[function] with-timer  THUNK :key output values? format-string return-timer?
+
+Execute THUNK and time it's execution
+
+if OUTPUT is set, it must be a port and the execution time will be sent there
+if VALUES? is #t, it return 2 values (the time and the regular return-value of the proc)
+FORMAT-STRING define how to format the timer 
+if RETURN-TIMER is true, the proc return value is ignored and the timer is returned instead
+
