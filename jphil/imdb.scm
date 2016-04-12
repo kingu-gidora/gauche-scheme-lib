@@ -1,4 +1,4 @@
-g(define-module jphil.imdb
+(define-module jphil.imdb
   (use jphil.http)
   (use gauche.parameter)
   (use sxml.ssax)
@@ -11,7 +11,12 @@ g(define-module jphil.imdb
 (select-module jphil.imdb)
 
 (define http-server (make-parameter "www.myapifilms.com"))
+
+;; go to http://www.myapifilms.com to request a API token
 (define api-token (make-parameter "---"))
+;; Set this to a directory where to cache the xml files returned by myapifilms
+;; Since myapifilm requests are limited, better set it to a persistant place (not tmp)
+;; TODO: Compress them to take less space.
 (define imdb:xml-directory (make-parameter "path-to-xml-cache"))
 
 (define-class <movie> ()
