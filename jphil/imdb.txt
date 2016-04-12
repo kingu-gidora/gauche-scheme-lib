@@ -1,0 +1,24 @@
+= jphil.imdb =
+
+This is a utility to fetch IMDB movie data from www.myapifilms.com
+
+NOTE: This file is still a work-in-progress
+NOTE: This file require customization 
+
+[Parameter] http-server 
+The server name, should be www.myapifilms.com
+
+[Parameter] api-token
+Your personal api token.  Need to be manually requested at www.myapifilms.com
+
+[Parameter] imdb:xml-directory
+A directory to cache xml files.  Must be accessible for r/w
+
+[function] imdb:getXML ID
+Fetch the movie whose IMDB id is ID, store the xml in the cache and return it
+
+[function] imdb:xml->movie FILE
+Parse the xml from FILE and return a <movie> object
+
+[function] imdb:id->movie ID
+Take a imdb ID and return a <movie> object
