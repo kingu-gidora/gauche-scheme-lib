@@ -1,7 +1,7 @@
 (define-module game.util
   (use srfi-27)
   (use gauche.sequence)
-  (use rpg.dice)
+  (use game.dice)
   (export-all))
 (select-module game.util)
 
