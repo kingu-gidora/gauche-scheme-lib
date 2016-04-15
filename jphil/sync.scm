@@ -9,6 +9,7 @@
     (unless (file-exists? target) (error "Target file does not exists!"))
     (let ((cmd `(rsync -rtu ,source ,target)))
       (run-process cmd :wait #t))))
+(define rsync sync) 
 
 (define sync-both-ways
   (lambda (dir1 dir2)
