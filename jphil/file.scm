@@ -36,6 +36,13 @@
 		      :children? #t)))))
 
 (define string->file
-  (lambda (string file)
-    (call-with-output-file file (^[p] (display string p)))
-    file))
+  (lambda (string file) (call-with-output-file file (^[p] (display string p))) file))
+
+
+(define-method file-for-each ((proc  <procedure>)(file <string>))
+  (call-with-input-file file
+    (lambda (p) 
+      (let loop ((line (read-line p)))
+	(unless (eof-object? line)	
+		(proc line)
+		(loop (read-line p)))))))
