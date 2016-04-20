@@ -1,0 +1,159 @@
+#!/usr/bin/gosh 
+(add-load-path "/home/jluo/gauche-scheme-lib")
+(use gauche.parseopt)
+(use jphil.timer)
+(use jphil.ansi)
+(use game.grid)
+(use game.astar-heap)
+(use file.util)
+(use srfi-43)
+(define vector-for-each-with-index vector-for-each)
+(define vector-map-with-index vector-map)
+
+
+(define vov->grid
+  (lambda (vov)
+    (let* ((ly (vector-length vov))
+	   (lx (vector-length (vector-ref vov 1)))
+	   (G (make-grid lx ly #f)))
+      
+      (vector-for-each-with-index
+       (lambda (y line)
+	 (vector-for-each-with-index 
+	  (lambda (x val)
+	    (grid-set! G x y val))
+	  line))
+       vov)
+      G)))
+
+(define heuristic (lambda (n) (manhattan n to 10)))
+ 
+(define square-a*
+  (lambda (grid from to heuristic)
+    (a* grid from to 
+	:neighbours (lambda (n) (get-neighbours-func n grid #t))
+	:heuristic heuristic
+	:move move-cost 
+	:walkable (lambda (n) (walkable? grid n))
+	)))
+
+(define show-help
+  (lambda (a)
+    (print a)
+    (print "-u | --heuristic  (manhattan euclidian or dijkstra)")
+    (print "-o | --map-only   Show only the map, not the path")
+    (print "-b | --board      File name of the map file")
+    (print "-h | --help       Show help (like right now)")
+    (exit)
+    ))
+
+(define main
+  (lambda (args)
+  (with-timer
+  (lambda ()
+    (let-args (cdr args)
+	      ((heuristic "u|heuristic=s" "manhattan")
+	       (map-only  "o|map-only")
+	       (board     "b|board=s" "map")
+	       (help      "h|help" => (cut show-help (car args))))
+	      
+	      (let* ((from #f)
+		     (to #f)
+		     (heu (case (string->symbol heuristic)
+			    ((manhattan) manhattan)
+			    ((euclidian) euclidian)
+			    ((dijkstra) dijkstra) 
+			    (else (error "Unknown heuristic: " heuristic))))
+		     (vov (list->vector 
+			   (map 
+			    (lambda (l) (list->vector (string-split l " ")))
+			    (file->string-list board))))
+		     (vov2 (vector-map-with-index
+			    (lambda (y line)
+			      (vector-map-with-index
+			       (lambda (x val)
+				 (cond ((string=? val "S") (set! from `(,x . ,y)) 1)
+				       ((string=? val "F") (set! to  `(,x . ,y)) 1)
+				       ((string=? val "#") 0)
+				       ((string=? val ".") 1)
+				       (else (error "Bad mapfile" val))))
+			       line))
+			    vov)))
+
+		(let* ((WMAP (vov->grid vov2))
+		       (PATH (square-a* WMAP from to heu)))
+
+		  (unless map-only
+			  (let ((parent to))
+			    (for-each 
+			     (lambda (c)
+			       (let ((dn (cons (- (car c) (car parent)) (- (cdr c) (cdr parent)))))
+				 (grid-set! WMAP (car c) (cdr c) 
+					    (call-with-current-continuation
+					     (lambda (k)
+					       (for-each 
+						(lambda (zz)
+						  (when (equal? dn (car zz))  
+							(k (cadr zz))))
+						'(((-1 . -1) " ")
+						  (( 0 . -1) " ")
+						  (( 1 . -1) " ")
+						  ((-1 .  0) " ")
+						  (( 1 .  0) " ")
+						  ((-1 .  1) " ")
+						  (( 0 .  1) " ")
+						  (( 1 .  1) " ")
+						  )))))
+				 (set! parent c))
+			       )
+			     (reverse PATH))
+			    ))
+		  (grid-set! WMAP (car from) (cdr from) 's)
+		  (grid-set! WMAP (car to) (cdr to) 'f)
+
+		  (let ((i 0)
+			(reset (lambda () (format #t "~a[0m" #\escape))))
+		    
+		    (newline)
+		    
+		    (display (ansi-parse "   @(bg green)@(fg black)"))
+		    (display "╔")
+		    (display (make-string (+ 1 (* (WMAP 'width) 2)) #\═))
+		    (display "╗")
+		    (reset)(newline)
+		    
+		    (grid-for-each WMAP
+				   (lambda (x) 
+				     (display (case x 
+						((0) "■ ") 
+						((1) "﹡")
+						((s) (ansi-parse "@(fg red)⛷ @(fg black)")) 
+						((f) (ansi-parse "@(fg red)⛿ @(fg black)")) 
+						(else (ansi-parse (format #f "@(fg white)~a@(fg black)" x))) 
+						)))
+				   
+				   (lambda (y)
+				     (display (ansi-parse "   @(bg green)@(fg black)║ "))
+				     (display "")
+				     )
+				   
+				   (lambda (y)
+				     
+				     (display "║")
+				     (reset)(newline)
+				     ))
+		    (display (ansi-parse "   @(bg green)@(fg black)"))
+		    (display "╚")		    
+		    (display (make-string (+ 1 (* (WMAP 'width) 2)) #\═))
+		    (display "╝")		   
+		    
+		    (reset)(newline)
+		    (flush)
+		    (newline)
+		    )
+		  
+		  ;; (print (if (list? PATH)
+		  ;; 	   (length PATH)
+		  ;; 	   PATH))
+		  )))))
+  ))
