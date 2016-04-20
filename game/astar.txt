@@ -1,0 +1,40 @@
+== game.astar-heap ==
+
+astar-heap is mostly the same code as astar, but use a binary heap (jphil.binheap) 
+instead of sorting a list at every iteration.
+It is the one that should be used.
+
+Some of the procedure and functionalities have not been tested a lot
+and bugs are still to be expected.
+
+USAGE
+
+[procedure] a* grid from to &key neighbours heuristic move walkable
+
+grid:  A grid object (see game.grid)
+
+from: the starting point (a <node> object)
+
+to: the ending point (a <node> object)
+
+options:
+
+neighbours: A procedure that take one argument (a <node> object) and return the list of neighbour node.  
+            Default is "get-neighbour-func" that assume we are working with a square grid
+            Must be changed for isometric or hexagonal maps.
+
+heuristic:  A procedure of 3 arguments FROM (a <node>) TO (a <node>) and MOVE-COST (an <integer>).  
+	    Shall return an estimate total cost of movement from FROM to TO, for each space costing 
+	    MOVE-COST to traverse.  Default is manhattan.
+
+move:	    A procedure of 2 arguments (2 <nodes> that must be adjacent), return the cost for moving 
+            from ont to the other.
+
+walkable:   A procedure of 1 argument, a <node>, return #t if the node is walkable, #f if not.
+
+
+
+
+
+   
+

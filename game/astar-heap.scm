@@ -170,7 +170,6 @@
 								       (< (get-F n1)
 									  (get-F n2)))))))
 			   
-
 			   (search (lambda (cn parent)
 				     (add-to-closeL! cn)
 				     (if (equal? cn to) 
