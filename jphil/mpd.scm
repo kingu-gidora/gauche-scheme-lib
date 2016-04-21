@@ -1,6 +1,7 @@
 (define-module jphil.mpd
-  (use gauche-parameter)
+  (use gauche.parameter)
   (use gauche.net)
+  (use jphil.process)
   (export-all))
 
 (select-module jphil.mpd)
@@ -8,19 +9,36 @@
 (define mpd:port (make-parameter 6600))
 (define mpd:host (make-parameter "localhost"))
 
+(define mpd:process-exists? 
+  (lambda ()
+    (call-with-current-continuation
+     (lambda (k)
+       (for-each 
+	(lambda (x) 
+	  (when (#/^mpd/ x) 
+		(k #t)))
+	(process->list '(ps aux)))
+       #f))))
+
+(define mpd:connect
+  (lambda ()
+    (make-client-socket 'inet (mpd:host) (mpd:port))))
+
 (define mpd-command
-  (let ((*MPD* (make-client-socket 'inet (mpd:host) (mpd:port))))
+  (let ((*MPD* (mpd:connect)))
     (lambda (cmd)
       (dynamic-wind
-	  (lambda () 
+	  (lambda ()
+	    (unless (mpd:process-exists?) (error "MPD Daemon is not running"))
 	    (when (eq? 'closed (socket-status *MPD*))
-		  (set! *MPD* (make-client-socket 'inet (mpd:host) (mpd:port)))))
+		  (set! *MPD* (mpd:connect))))
 	  (lambda () (letrec ((buf '())
 			      (loop (lambda (p) 
 				      (let ((line (read-line p)))
 					(if (string=? "OK" line)
 					    (reverse buf)
 					    (begin
+					      (when (#/^ACK/ line) (push! buf `(error ,line)))
 					      (unless (#/^OK MPD/ line)
 						      (push! buf (string-split line #\:)))
 					      (loop p)))))))
@@ -30,6 +48,7 @@
 						  (loop in)))))
 	  (lambda () #f)))))
 
+;; Querying status
 (define mpd:clearerror (lambda () (mpd-command "clearerror")))
 (define mpd:currentsong (lambda () (mpd-command "currentsong")))
 (define mpd:status (lambda () (mpd-command "status")))
@@ -47,6 +66,7 @@
 (define mpd:idle-message (lambda () (mpd-command "idle message")))
 (define mpd:idle-noidle (lambda () (mpd-command "noidle")))
 
+;; Playback options
 (define mpd:consume (lambda (state) (mpd-command (format #f "consume ~a" state))))
 (define mpd:crossfade (lambda (seconds) (mpd-command (format #f "crossfade ~a" seconds))))
 (define mpd:mixrampdb (lambda (decibels) (mpd-command (format #f "mixrampdb ~a" decibels))))
@@ -62,6 +82,7 @@
 (define mpd:replay_gain_mode-auto (lambda () (mpd:replay_gain_mode "auto")))  
 (define mpd:replay_gain_status (lambda () (mpd-command "replay_gain_status")))
 
+;; Controlling playback
 (define mpd:next (lambda () (mpd-command "next")))
 (define mpd:previous (lambda () (mpd-command "previous")))
 (define mpd:pause (lambda (state) (mpd-command (format #f "pause ~a" state))))
@@ -69,5 +90,12 @@
 (define mpd:play-at (lambda (pos) (mpd-command (format #f "play ~a" pos))))
 (define mpd:playid (lambda (id) (mpd-command (format #f "playid ~a" id))))
 (define mpd:stop (lambda () (mpd-command "stop")))
+
+;; The current Playlist
+(define mpd:clear-playlist (lambda () (mpd-command "clear")))
+(define mpd:add-to-playlist (lambda (uri) (mpd-command (format #f "add ~a" uri))))
+(define mpd:addid (lambda (uri) (mpd-command (format #f "addid ~a" uri))))
+(define mpd:addid-at-position (lambda (uri pos) (mpd-command (format #f "addid ~a ~a" uri pos))))
+
 
 
