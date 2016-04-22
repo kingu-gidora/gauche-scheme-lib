@@ -2,6 +2,7 @@
   (use gauche.parameter)
   (use gauche.net)
   (use jphil.process)
+  (use srfi-13)
   (export-all))
 
 (select-module jphil.mpd)
@@ -40,7 +41,11 @@
 					    (begin
 					      (when (#/^ACK/ line) (push! buf `(error ,line)))
 					      (unless (#/^OK MPD/ line)
-						      (push! buf (string-split line #\:)))
+						      (print line)
+						      (push! buf (let ((spl (string-split line #\:)))
+								   (cons (string->symbol (car spl))
+									 (string-trim-both (cadr spl)))))) 
+							     
 					      (loop p)))))))
 		       (call-with-client-socket *MPD*
 						(lambda (in out)
@@ -93,9 +98,14 @@
 
 ;; The current Playlist
 (define mpd:clear-playlist (lambda () (mpd-command "clear")))
-(define mpd:add-to-playlist (lambda (uri) (mpd-command (format #f "add ~a" uri))))
+(define mpd:add-to-playlist (lambda (uri) (mpd-command (format #f "add ~s" uri))))
 (define mpd:addid (lambda (uri) (mpd-command (format #f "addid ~a" uri))))
 (define mpd:addid-at-position (lambda (uri pos) (mpd-command (format #f "addid ~a ~a" uri pos))))
 
+
+;; The music database
+(define mpd:update-all (lambda () (mpd-command "update")))
+(define mpd:update (lambda (uri) (mpd-command (format #f "update ~s" uri))))
+(define mpd:listall (lambda () (mpd-command "listall")))
 
 
