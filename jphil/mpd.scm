@@ -36,16 +36,14 @@
 	  (lambda () (letrec ((buf '())
 			      (loop (lambda (p) 
 				      (let ((line (read-line p)))
+					(when (#/^ACK/ line) (print line)(exit))
 					(if (string=? "OK" line)
 					    (reverse buf)
-					    (begin
-					      (when (#/^ACK/ line) (push! buf `(error ,line)))
+					    (begin					      
 					      (unless (#/^OK MPD/ line)
-						      (print line)
 						      (push! buf (let ((spl (string-split line #\:)))
 								   (cons (string->symbol (car spl))
-									 (string-trim-both (cadr spl)))))) 
-							     
+									 (string-trim-both (cadr spl))))))
 					      (loop p)))))))
 		       (call-with-client-socket *MPD*
 						(lambda (in out)
@@ -99,8 +97,8 @@
 ;; The current Playlist
 (define mpd:clear-playlist (lambda () (mpd-command "clear")))
 (define mpd:add-to-playlist (lambda (uri) (mpd-command (format #f "add ~s" uri))))
-(define mpd:addid (lambda (uri) (mpd-command (format #f "addid ~a" uri))))
-(define mpd:addid-at-position (lambda (uri pos) (mpd-command (format #f "addid ~a ~a" uri pos))))
+(define mpd:addid (lambda (uri) (mpd-command (format #f "addid ~s" uri))))
+(define mpd:addid-at-position (lambda (uri pos) (mpd-command (format #f "addid ~s ~a" uri pos))))
 
 
 ;; The music database
