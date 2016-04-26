@@ -107,3 +107,25 @@
 (define mpd:listall (lambda () (mpd-command "listall")))
 
 
+;; Stickers
+
+(define mpd:set-sticker
+  (lambda (type uri name value)
+    (mpd-command (format #f "sticker set ~s ~s ~s ~s" type uri name value))))
+
+(define mpd:get-sticker
+  (lambda (type uri name)
+    (mpd-command (format #f "sticker set ~s ~s ~s" type uri name))))
+
+(define mpd:delete-sticker
+  (lambda (type uri name)
+    (mpd-command (format #f "sticker delete ~s ~s ~s" type uri name))))
+
+(define mpd:list-sticker
+  (lambda (type uri)
+    (mpd-command (format #f "sticker set ~s ~s ~s" type uri))))
+
+(define mpd:find-sticker
+  (lambda (type uri name)
+    (mpd-command (format #f "sticker find ~s ~s ~s" type uri name))))
+
