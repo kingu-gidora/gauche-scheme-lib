@@ -105,27 +105,50 @@
 (define mpd:update-all (lambda () (mpd-command "update")))
 (define mpd:update (lambda (uri) (mpd-command (format #f "update ~s" uri))))
 (define mpd:listall (lambda () (mpd-command "listall")))
+(define mpd:rescan  (lambda (uri) (mpd-command (format #f "rescan ~s" uri))))
+(define mpd:rescan-all  (lambda () (mpd-command "rescan ~s")))
 
+;; Mounts and neighbors
+
+(define mpd:mount (lambda (path uri) (mpd-command (format #f "mount ~s ~s" path uri))))
+(define mpd:unmount (lambda (path) (mpd-command (format #f "unmount ~s" path))))
+(define mpd:listmounts (lambda () (mpd-command "listmounts"))
+(define mpd:listneighbours (lambda () (mpd-command "listneighbours"))))
 
 ;; Stickers
 
-(define mpd:set-sticker
-  (lambda (type uri name value)
-    (mpd-command (format #f "sticker set ~s ~s ~s ~s" type uri name value))))
+(define mpd:set-sticker (lambda (type uri name value) (mpd-command (format #f "sticker set ~s ~s ~s ~s" type uri name value))))
+(define mpd:get-sticker (lambda (type uri name) (mpd-command (format #f "sticker set ~s ~s ~s" type uri name))))
+(define mpd:delete-sticker (lambda (type uri name) (mpd-command (format #f "sticker delete ~s ~s ~s" type uri name))))
+(define mpd:list-sticker (lambda (type uri) (mpd-command (format #f "sticker set ~s ~s ~s" type uri))))
+(define mpd:find-sticker (lambda (type uri name) (mpd-command (format #f "sticker find ~s ~s ~s" type uri name))))
 
-(define mpd:get-sticker
-  (lambda (type uri name)
-    (mpd-command (format #f "sticker set ~s ~s ~s" type uri name))))
+;;Connection settings
 
-(define mpd:delete-sticker
-  (lambda (type uri name)
-    (mpd-command (format #f "sticker delete ~s ~s ~s" type uri name))))
+(define mpd:close (lambda () (mpd-command "close")))
+(define mpd:kill (lambda () (mpd-command "kill")))
+(define mpd:ping (lambda () (mpd-command "ping")))
+(define mpd:password (lambda (password) (mpd-command (format #f "password ~s" password))))
 
-(define mpd:list-sticker
-  (lambda (type uri)
-    (mpd-command (format #f "sticker set ~s ~s ~s" type uri))))
+;; Audio output devices
 
-(define mpd:find-sticker
-  (lambda (type uri name)
-    (mpd-command (format #f "sticker find ~s ~s ~s" type uri name))))
+(define mpd:outputs (lambda () (mpd-command "outputs")))
+(define mpd:disableoutput (lambda (id) (mpd-command (format #f "disableoutput ~s" id))))
+(define mpd:enableoutput (lambda (id) (mpd-command (format #f "enableoutput ~s" id))))
+(define mpd:toggleoutput (lambda (id) (mpd-command (format #f "toggleoutput ~s" id))))
 
+;; Reflection
+
+(define mpd:commands (lambda () (mpd-command "commands")))
+(define mpd:notcommands (lambda () (mpd-command "notcommands")))
+(define mpd:tagtypes (lambda () (mpd-command "tagtypes")))
+(define mpd:urlhandlers (lambda () (mpd-command "urlhandlers")))
+(define mpd:decoders (lambda () (mpd-command "decoders")))
+
+;; Client to client
+
+(define mpd:subscribe (lambda (channel) (mpd-command (format #f "subscribe ~s" channel))))
+(define mpd:unsubscribe (lambda (channel) (mpd-command (format #f "unsubscribe ~s" channel))))
+(define mpd:channels (lambda () (mpd-command "channels")))
+(define mpd:readmessage (lambda () (mpd-command "readmessage")))
+(define mpd:sendmessage (lambda (channel text) (mpd-command (format #f "sendmessage ~s ~s" channel text))))
