@@ -9,6 +9,8 @@
 
 (define mpd:port (make-parameter 6600))
 (define mpd:host (make-parameter "localhost"))
+(define mpd:on-ack #f)
+
 
 (define mpd:process-exists? 
   (lambda ()
@@ -17,7 +19,7 @@
        (for-each 
 	(lambda (x) 
 	  (when (#/^mpd/ x) 
-		(k #t)))
+		(k #t)))	
 	(process->list '(ps aux)))
        #f))))
 
@@ -33,22 +35,28 @@
 	    (unless (mpd:process-exists?) (error "MPD Daemon is not running"))
 	    (when (eq? 'closed (socket-status *MPD*))
 		  (set! *MPD* (mpd:connect))))
-	  (lambda () (letrec ((buf '())
-			      (loop (lambda (p) 
-				      (let ((line (read-line p)))
-					(when (#/^ACK/ line) (print line)(exit))
-					(if (string=? "OK" line)
-					    (reverse buf)
-					    (begin					      
-					      (unless (#/^OK MPD/ line)
-						      (push! buf (let ((spl (string-split line #\:)))
-								   (cons (string->symbol (car spl))
-									 (string-trim-both (cadr spl))))))
-					      (loop p)))))))
-		       (call-with-client-socket *MPD*
-						(lambda (in out)
-						  (format out "~a\n" cmd)
-						  (loop in)))))
+	  (lambda () 
+	    (call-with-current-continuation 
+	     (lambda (k)
+	       (letrec ((buf '())
+			(loop (lambda (p) 
+				(let ((line (read-line p)))
+				  (when (#/^ACK/ line)
+					(if mpd:on-ack 
+					    (mpd:on-ack line)
+					    (k #f)))
+				  (if (string=? "OK" line)
+				      (reverse buf)
+				      (begin					      
+					(unless (#/^OK MPD/ line)
+						(push! buf (let ((spl (string-split line #\:)))
+							     (cons (string->symbol (car spl))
+								   (string-trim-both (cadr spl))))))
+					(loop p)))))))
+		 (call-with-client-socket *MPD*
+					  (lambda (in out)
+					    (format out "~a\n" cmd)
+					    (loop in)))))))
 	  (lambda () #f)))))
 
 ;; Querying status
@@ -99,7 +107,7 @@
 (define mpd:add-to-playlist (lambda (uri) (mpd-command (format #f "add ~s" uri))))
 (define mpd:addid (lambda (uri) (mpd-command (format #f "addid ~s" uri))))
 (define mpd:addid-at-position (lambda (uri pos) (mpd-command (format #f "addid ~s ~a" uri pos))))
-
+(define mpd:shuffle (lambda () (mpd-command "shuffle")))
 
 ;; The music database
 (define mpd:update-all (lambda () (mpd-command "update")))
@@ -112,15 +120,15 @@
 
 (define mpd:mount (lambda (path uri) (mpd-command (format #f "mount ~s ~s" path uri))))
 (define mpd:unmount (lambda (path) (mpd-command (format #f "unmount ~s" path))))
-(define mpd:listmounts (lambda () (mpd-command "listmounts"))
-(define mpd:listneighbours (lambda () (mpd-command "listneighbours"))))
+(define mpd:listmounts (lambda () (mpd-command "listmounts")))
+(define mpd:listneighbours (lambda () (mpd-command "listneighbours")))
 
 ;; Stickers
 
 (define mpd:set-sticker (lambda (type uri name value) (mpd-command (format #f "sticker set ~s ~s ~s ~s" type uri name value))))
-(define mpd:get-sticker (lambda (type uri name) (mpd-command (format #f "sticker set ~s ~s ~s" type uri name))))
+(define mpd:get-sticker (lambda (type uri name) (mpd-command (format #f "sticker get ~s ~s ~s" type uri name))))
 (define mpd:delete-sticker (lambda (type uri name) (mpd-command (format #f "sticker delete ~s ~s ~s" type uri name))))
-(define mpd:list-sticker (lambda (type uri) (mpd-command (format #f "sticker set ~s ~s ~s" type uri))))
+(define mpd:list-sticker (lambda (type uri) (mpd-command (format #f "sticker list ~s ~s" type uri))))
 (define mpd:find-sticker (lambda (type uri name) (mpd-command (format #f "sticker find ~s ~s ~s" type uri name))))
 
 ;;Connection settings
