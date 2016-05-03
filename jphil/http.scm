@@ -26,6 +26,8 @@
       ((head) http-head)
       (else (error (format #f "Unknown http method: ~s\n" (~ self 'method))))))
   (define url (format #f "~a:~a" (~ self 'server)(~ self 'port)))
+  (display url (current-error-port))
+  (display (~ self 'query) (current-error-port))
   (let-values (((code head data)
 		(if (~ self 'file)
 		    (call-with-output-file (~ self 'file)

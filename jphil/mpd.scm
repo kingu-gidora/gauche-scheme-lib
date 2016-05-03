@@ -125,8 +125,16 @@
 
 ;; Stickers
 
-(define mpd:set-sticker (lambda (type uri name value) (mpd-command (format #f "sticker set ~s ~s ~s ~s" type uri name value))))
-(define mpd:get-sticker (lambda (type uri name) (mpd-command (format #f "sticker get ~s ~s ~s" type uri name))))
+(define mpd:set-sticker (lambda (uri name value :key (type "song")) 
+			  (mpd-command (format #f "sticker set ~s ~s ~s ~s" type uri name value))))
+(define %mpd:get-sticker (lambda (type uri name) (mpd-command (format #f "sticker get ~s ~s ~s" type uri name))))
+(define mpd:get-sticker (lambda  (uri name :key (type "song"))
+			  (let ((sticker (%mpd:get-sticker type uri name)))
+			    (if sticker
+				(cadr (string-split (cdar sticker) "="))
+				#f))))
+
+
 (define mpd:delete-sticker (lambda (type uri name) (mpd-command (format #f "sticker delete ~s ~s ~s" type uri name))))
 (define mpd:list-sticker (lambda (type uri) (mpd-command (format #f "sticker list ~s ~s" type uri))))
 (define mpd:find-sticker (lambda (type uri name) (mpd-command (format #f "sticker find ~s ~s ~s" type uri name))))
