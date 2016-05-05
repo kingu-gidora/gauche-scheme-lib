@@ -6,7 +6,7 @@
 (select-module jphil.http)
 
 (define-class <http-client-request> ()
-  ((server :init-keyword :server)
+  ((server :init-keyword :server :init-value "localhost")
    (port   :init-keyword :port :init-value 80)
    (query  :init-keyword :query :init-value "/")
    (method :init-keyword :method :init-value 'get)
@@ -40,7 +40,6 @@
   (send-query self))
 
 (define-method object-apply ((self <http-server-reply>))
-  
   (~ self 'data))
 
 ;; <http-client-request> self evaluate to it's server response
@@ -51,3 +50,12 @@
 ;;
 ;; so in short : (((make <http-client-request> ...))) => server reply data
 
+
+;; This is too simple and do not cover query strings.  But a good start.
+(define uri->string 
+  (lambda (uri)
+    (let-values (((scheme user host port path query-string frag) (uri-parse uri)))
+      (((make <http-client-request>
+	  :server (or host "localhost")
+	  :port (or port 80)
+	  :query (or path "/")))))))
