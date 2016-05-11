@@ -6,6 +6,8 @@
 (select-module jphil.content-type)
 
 (define content-type-db-file (make-parameter "/etc/mime.types"))
+(define mailcap-file (make-parameter "/etc/mailcap"))
+
 
 (define content-type-of
   (let ((mime-types-hash (make-hash-table))
@@ -22,7 +24,8 @@
   				     `(,(m 1) ,(m 2))))
   		  exts)))))
      (file->string-list (content-type-db-file)))
-    (lambda (f)
+    (lambda (f :key (result-type 'list))
+      (print result-type)
       (or 
        (let ((ext (path-extension f)))
 	 (if ext
@@ -30,9 +33,9 @@
 			     (string->symbol (path-extension f))
 			     #f)
 	     #f))
-       (let* ((info (process-output->string 
-		     `(file |-b| |-i| ,f)))
-	      (splitted-file-command-result (string-split info #\;)))
-	 (string-split 
-	  (car splitted-file-command-result) #\/)))
-      )))
+       (let ((info (process-output->string `(file |-b| |-i| ,f))))
+	 (case result-type
+	   ((list) (string-split (car (string-split info #\;)) #\/))
+	   ((string) info)
+	   (else (error "Unknown result-type: " result-type))))
+       ))))
