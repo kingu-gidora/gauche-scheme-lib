@@ -3,36 +3,43 @@
   (use gauche.net)
   (use jphil.process)
   (use srfi-13)
+  (use rfc.json)
   (export-all))
 
 (select-module jphil.mpd)
 
 (define mpd:port (make-parameter 6600))
-(define mpd:host (make-parameter "localhost"))
-(define mpd:on-ack #f)
+(define mpd:host (make-parameter "192.168.1.107"))
+(define mpd:on-ack (make-parameter #f))
 
-
-(define mpd:process-exists? 
+(define mpd:process-exists?
   (lambda ()
-    (call-with-current-continuation
-     (lambda (k)
-       (for-each 
-	(lambda (x) 
-	  (when (#/^mpd/ x) 
-		(k #t)))	
-	(process->list '(ps aux)))
-       #f))))
+    (letrec ((f (lambda (l)
+		  (if (null? l)
+		      #f
+		      (if (#/mpd$/  (car l))
+			  #t
+			  (f (cdr l)))))))
+      (f (process->list '(ps -U mpd))))))
 
 (define mpd:connect
   (lambda ()
     (make-client-socket 'inet (mpd:host) (mpd:port))))
+
+(define mpd->http
+  (lambda (cmd)
+    (let ((ecmd (cmd)))
+      (print "Content-type: application/json; charset=utf-8")(newline)
+      (construct-json ecmd)
+      ecmd)))
+
 
 (define mpd-command
   (let ((*MPD* (mpd:connect)))
     (lambda (cmd)
       (dynamic-wind
 	  (lambda ()
-	    (unless (mpd:process-exists?) (error "MPD Daemon is not running"))
+;	    (unless (mpd:process-exists?) (error "MPD Daemon is not running"))
 	    (when (eq? 'closed (socket-status *MPD*))
 		  (set! *MPD* (mpd:connect))))
 	  (lambda () 
@@ -41,10 +48,12 @@
 	       (letrec ((buf '())
 			(loop (lambda (p) 
 				(let ((line (read-line p)))
+				  
 				  (when (#/^ACK/ line)
-					(if mpd:on-ack 
-					    (mpd:on-ack line)
+					(if (mpd:on-ack) 
+					    ((mpd:on-ack) line k)
 					    (k #f)))
+				  
 				  (if (string=? "OK" line)
 				      (reverse buf)
 				      (begin					      
@@ -108,6 +117,9 @@
 (define mpd:addid (lambda (uri) (mpd-command (format #f "addid ~s" uri))))
 (define mpd:addid-at-position (lambda (uri pos) (mpd-command (format #f "addid ~s ~a" uri pos))))
 (define mpd:shuffle (lambda () (mpd-command "shuffle")))
+(define mpd:playlistinfo (lambda () (mpd-command "playlistinfo")))
+(define mpd:playlistid (lambda (uri) (mpd-command (format #f "playlistid ~s" uri))))
+(define mpd:deleteid (lambda (id) (mpd-command (format #f "deleteid ~s" id))))
 
 ;; The music database
 (define mpd:update-all (lambda () (mpd-command "update")))
