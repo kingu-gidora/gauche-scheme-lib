@@ -113,13 +113,36 @@
 
 ;; The current Playlist
 (define mpd:clear-playlist (lambda () (mpd-command "clear")))
+(define mpd:clear-playlist-except-current 
+  (lambda ()
+    (define % (lambda (x) 
+		(let ((a (assoc 'Id x)))
+		  (if a (cdr a) 'x))))
+    (let ((pl (map cdr (filter (lambda (x)
+				 ;;(print x)
+				 (eq? (car x) 'Id))
+			       (mpd:playlistinfo))))
+	  (current (% (mpd:currentsong))))
+      (for-each
+       (lambda (x)
+	 (unless (string=? x current)
+		 (mpd:deleteid x)))
+       pl))))
 (define mpd:add-to-playlist (lambda (uri) (mpd-command (format #f "add ~s" uri))))
 (define mpd:addid (lambda (uri) (mpd-command (format #f "addid ~s" uri))))
 (define mpd:addid-at-position (lambda (uri pos) (mpd-command (format #f "addid ~s ~a" uri pos))))
 (define mpd:shuffle (lambda () (mpd-command "shuffle")))
 (define mpd:playlistinfo (lambda () (mpd-command "playlistinfo")))
-(define mpd:playlistid (lambda (uri) (mpd-command (format #f "playlistid ~s" uri))))
+(define mpd:playlistid (lambda (id) (mpd-command (format #f "playlistid ~s" id))))
 (define mpd:deleteid (lambda (id) (mpd-command (format #f "deleteid ~s" id))))
+ ;; (define mpd:playlist-duration (lambda () 
+ ;; 				(let ((tt 0)
+ ;; 				      (pl (mpd:playlistinfo)))
+ ;; 				  (for-each
+ ;; 				   (lambda (x)
+ ;; 				     (set! tt (+ tt 
+				      
+
 
 ;; The music database
 (define mpd:update-all (lambda () (mpd-command "update")))
@@ -137,8 +160,7 @@
 
 ;; Stickers
 
-(define mpd:set-sticker (lambda (uri name value :key (type "song")) 
-			  (mpd-command (format #f "sticker set ~s ~s ~s ~s" type uri name value))))
+(define mpd:set-sticker (lambda (uri name value :key (type "song")) (mpd-command (format #f "sticker set ~s ~s ~s ~s" type uri name value))))
 (define %mpd:get-sticker (lambda (type uri name) (mpd-command (format #f "sticker get ~s ~s ~s" type uri name))))
 (define mpd:get-sticker (lambda  (uri name :key (type "song"))
 			  (let ((sticker (%mpd:get-sticker type uri name)))
