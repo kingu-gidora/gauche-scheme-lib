@@ -1,5 +1,6 @@
 (define-module jphil.file
   (use jphil.list)
+  (use file.util)
   (export-all))
 (select-module jphil.file)
 
