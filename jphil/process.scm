@@ -13,7 +13,9 @@
     (call-with-input-process
      cmd
      (lambda (p) (%read-from-port p))
-     :error :ignore )))
+     :error :ignore 
+     :on-abnormal-exit :ignore
+     )))
 
 (define process->string (lambda (c) (string-join (process->list c) "\n")))
 

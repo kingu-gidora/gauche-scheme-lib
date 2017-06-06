@@ -1,0 +1,29 @@
+= jphil.mpd =
+
+[parameter] mpd:port
+Port mpd is running on (default: 6600).
+
+[parameter] mpd:host
+Host mpd is running on (default: localhost)
+
+[function] mpd:process-exists?
+Check if a 'mpd' process is running.
+This function do a process call to 'ps' and check is mpd is present. It is not efficient!
+
+[function] mpd:connect 
+Connect to mpd.  This is a low-level function that is not supposed to be used on high-level code. (the connection is managed automatically when you issue a mpd command)
+
+[function] mpd->http CMD
+This is just an experimental wrapper.  it issue the command CMD, return a http header and the result as JSON data.  It might not work with some commands.
+
+[function] mpd:command CMD
+Send CMD to mpd.  CMD is a string.  It incluse both the command and it's arguments.
+For example to set the volume to 50%, you would do: (mpd:command "setvol 50").
+However, you dont usually use mpd:command directly.
+The real good way for the above command would be: (mpd:setvol 50)
+
+[function] mpd:clearerror
+Clears the current error message in status (this is also accomplished by any command that starts playback).
+
+[function] mpd:currentsong
+Displays the song info of the current song (same song that is identified in status).
